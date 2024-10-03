@@ -4,13 +4,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/**
+/*
  * https://github.com/yjs/y-protocols/blob/master/PROTOCOL.md
+ *
+ * 123456=0b111|1000100|1000000
+ * ->(1)1000000|(1)1000100|(0)____111
+ * -> 0xc0     | 0xc4     | 0x07
  */
 public class Encoder {
-    protected final ByteArrayOutputStream encoder = new ByteArrayOutputStream();
+    /*
+        see: https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+        ie. 2^53 -1
+     */
+    public static final long MAX_SAFE_INTEGER = 9007199254740991L;
 
-    public void writeVarUnsignedInt(long num) {
+    protected final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+    public void writeVarUint(long num) {
+        if (num > MAX_SAFE_INTEGER)
+            throw new IllegalArgumentException("Number too large than max safe integer(2^53-1)");
         while (num > 127) {
             byte b = (byte) (128 | (127 & num));
             write(b);
@@ -21,8 +33,8 @@ public class Encoder {
     }
 
     public void writeVarByteArray(byte[] arr) throws IOException {
-        writeVarUnsignedInt(arr.length);
-        encoder.write(arr);
+        writeVarUint(arr.length);
+        buffer.write(arr);
     }
 
     public byte[] utf8(String str) {
@@ -34,10 +46,10 @@ public class Encoder {
     }
 
     public byte[] toBytes() {
-        return encoder.toByteArray();
+        return buffer.toByteArray();
     }
 
     private void write(byte number) {
-        encoder.write(number);
+        buffer.write(number);
     }
 }
