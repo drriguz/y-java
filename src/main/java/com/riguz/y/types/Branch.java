@@ -1,5 +1,5 @@
 package com.riguz.y.types;
 
-class YTextTest {
+public class Branch {
 
 }
